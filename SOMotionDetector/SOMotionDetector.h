@@ -74,6 +74,8 @@ typedef enum
 @property (nonatomic) BOOL useM7IfAvailable NS_AVAILABLE_IOS(7_0);
 
 
+@property (nonatomic) BOOL accessLocationIfM7Available;
+
 /**
  *@param speed  The minimum speed value less than which will be considered as not moving state
  */

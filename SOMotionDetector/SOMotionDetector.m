@@ -73,24 +73,11 @@ CGFloat kMinimumRunningAcceleration = 3.5f;
 #pragma mark - Public Methods
 - (void)startDetection
 {
-    [[SOLocationManager sharedInstance] start];
-    
-    self.shakeDetectingTimer = [NSTimer scheduledTimerWithTimeInterval:0.01f target:self selector:@selector(detectShaking) userInfo:Nil repeats:YES];
-    
-    [self.motionManager startAccelerometerUpdatesToQueue:[[NSOperationQueue alloc] init] withHandler:^(CMAccelerometerData *accelerometerData, NSError *error)
-     {
-         _acceleration = accelerometerData.acceleration;
-         [self calculateMotionType];
-         dispatch_async(dispatch_get_main_queue(), ^{
-             if (self.delegate && [self.delegate respondsToSelector:@selector(motionDetector:accelerationChanged:)])
-             {
-                 [self.delegate motionDetector:self accelerationChanged:self.acceleration];
-             }
-         });
-     }];
-    
     if (self.useM7IfAvailable && [CMMotionActivityManager isActivityAvailable])
     {
+        if (self.accessLocationIfM7Available) {
+            [[SOLocationManager sharedInstance] start];
+        }
         if (!self.motionActivityManager)
         {
             self.motionActivityManager = [[CMMotionActivityManager alloc] init];
@@ -129,6 +116,22 @@ CGFloat kMinimumRunningAcceleration = 3.5f;
             });
 
         }];
+    }else{
+        [[SOLocationManager sharedInstance] start];
+        
+        self.shakeDetectingTimer = [NSTimer scheduledTimerWithTimeInterval:0.01f target:self selector:@selector(detectShaking) userInfo:Nil repeats:YES];
+        
+        [self.motionManager startAccelerometerUpdatesToQueue:[[NSOperationQueue alloc] init] withHandler:^(CMAccelerometerData *accelerometerData, NSError *error)
+         {
+             _acceleration = accelerometerData.acceleration;
+             [self calculateMotionType];
+             dispatch_async(dispatch_get_main_queue(), ^{
+                 if (self.delegate && [self.delegate respondsToSelector:@selector(motionDetector:accelerationChanged:)])
+                 {
+                     [self.delegate motionDetector:self accelerationChanged:self.acceleration];
+                 }
+             });
+         }];
     }
 }
 
