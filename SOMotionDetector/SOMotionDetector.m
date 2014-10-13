@@ -42,6 +42,8 @@ CGFloat kMinimumRunningAcceleration = 3.5f;
 @property (strong, nonatomic) CMMotionManager *motionManager;
 @property (strong, nonatomic) CMMotionActivityManager *motionActivityManager;
 
+@property (nonatomic) BOOL started;
+
 
 @end
 
@@ -73,11 +75,21 @@ CGFloat kMinimumRunningAcceleration = 3.5f;
 #pragma mark - Public Methods
 - (void)startDetection
 {
+    if (self.started) {
+        return;
+    }
+    
+    self.started = YES;
+    
+    if ((self.accessLocationIfM7Available && self.useM7IfAvailable && [CMMotionActivityManager isActivityAvailable])
+        || !self.accessLocationIfM7Available) {
+        [[SOLocationManager sharedInstance] start];
+    }else{
+        [[SOLocationManager sharedInstance] startSignificant];
+    }
     if (self.useM7IfAvailable && [CMMotionActivityManager isActivityAvailable])
     {
-        if (self.accessLocationIfM7Available) {
-            [[SOLocationManager sharedInstance] start];
-        }
+        
         if (!self.motionActivityManager)
         {
             self.motionActivityManager = [[CMMotionActivityManager alloc] init];
@@ -117,8 +129,6 @@ CGFloat kMinimumRunningAcceleration = 3.5f;
 
         }];
     }else{
-        [[SOLocationManager sharedInstance] start];
-        
         self.shakeDetectingTimer = [NSTimer scheduledTimerWithTimeInterval:0.01f target:self selector:@selector(detectShaking) userInfo:Nil repeats:YES];
         
         [self.motionManager startAccelerometerUpdatesToQueue:[[NSOperationQueue alloc] init] withHandler:^(CMAccelerometerData *accelerometerData, NSError *error)
@@ -137,10 +147,21 @@ CGFloat kMinimumRunningAcceleration = 3.5f;
 
 - (void)stopDetection
 {
+    if (!self.started) {
+        return;
+    }
+    
+    self.started = NO;
     [self.shakeDetectingTimer invalidate];
     self.shakeDetectingTimer = nil;
     
-    [[SOLocationManager sharedInstance] stop];
+    if ((self.accessLocationIfM7Available && self.useM7IfAvailable && [CMMotionActivityManager isActivityAvailable])
+        || !self.accessLocationIfM7Available) {
+        [[SOLocationManager sharedInstance] stop];
+    }else{
+        [[SOLocationManager sharedInstance] stopSignificant];
+    }
+    
     [self.motionManager stopAccelerometerUpdates];
     [self.motionActivityManager stopActivityUpdates];
 }
