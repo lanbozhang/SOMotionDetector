@@ -38,6 +38,10 @@
 
 - (void)start
 {
+    if ([self.locationManager respondsToSelector:@selector(requestAlwaysAuthorization)]) {
+        [self.locationManager requestAlwaysAuthorization];
+    }
+
     [self.locationManager startUpdatingLocation];
     
     if (self.locationType == LocationManagerTypeNone)
@@ -51,6 +55,10 @@
 }
 - (void)startSignificant
 {
+    if ([self.locationManager respondsToSelector:@selector(requestAlwaysAuthorization)]) {
+        [self.locationManager requestAlwaysAuthorization];
+    }
+
     [self.locationManager startMonitoringSignificantLocationChanges];
     
     if (self.locationType == LocationManagerTypeNone)
