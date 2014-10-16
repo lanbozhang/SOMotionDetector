@@ -98,17 +98,17 @@ CGFloat kMinimumRunningAcceleration = 3.5f;
         [self.motionActivityManager startActivityUpdatesToQueue:[[NSOperationQueue alloc] init] withHandler:^(CMMotionActivity *activity) {
             dispatch_async(dispatch_get_main_queue(), ^{
                 
-                if (activity.walking)
+                if (activity.automotive)
+                {
+                    _motionType = MotionTypeAutomotive;
+                }
+                else if (activity.walking)
                 {
                     _motionType = MotionTypeWalking;
                 }
                 else if (activity.running)
                 {
                     _motionType = MotionTypeRunning;
-                }
-                else if (activity.automotive)
-                {
-                    _motionType = MotionTypeAutomotive;
                 }
                 else if (activity.stationary || activity.unknown)
                 {
