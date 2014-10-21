@@ -85,7 +85,11 @@ CGFloat kMinimumRunningAcceleration = 3.5f;
         || !self.accessLocationIfM7Available) {
         [[SOLocationManager sharedInstance] start];
     }else{
-        [[SOLocationManager sharedInstance] startSignificant];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(p_startInBackground)
+                                                     name:UIApplicationDidEnterBackgroundNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(p_endInBackground) name:UIApplicationWillEnterForegroundNotification object:nil];
     }
     if (self.useM7IfAvailable && [CMMotionActivityManager isActivityAvailable])
     {
@@ -98,17 +102,17 @@ CGFloat kMinimumRunningAcceleration = 3.5f;
         [self.motionActivityManager startActivityUpdatesToQueue:[[NSOperationQueue alloc] init] withHandler:^(CMMotionActivity *activity) {
             dispatch_async(dispatch_get_main_queue(), ^{
                 
-                if (activity.automotive)
-                {
-                    _motionType = MotionTypeAutomotive;
-                }
-                else if (activity.walking)
+                if (activity.walking)
                 {
                     _motionType = MotionTypeWalking;
                 }
                 else if (activity.running)
                 {
                     _motionType = MotionTypeRunning;
+                }
+                else if (activity.automotive)
+                {
+                    _motionType = MotionTypeAutomotive;
                 }
                 else if (activity.stationary || activity.unknown)
                 {
@@ -159,6 +163,7 @@ CGFloat kMinimumRunningAcceleration = 3.5f;
         || !self.accessLocationIfM7Available) {
         [[SOLocationManager sharedInstance] stop];
     }else{
+        [[NSNotificationCenter defaultCenter] removeObserver:self];
         [[SOLocationManager sharedInstance] stopSignificant];
     }
     
@@ -274,7 +279,16 @@ CGFloat kMinimumRunningAcceleration = 3.5f;
     }
 }
 
+- (void)p_startInBackground{
+    [[SOLocationManager sharedInstance] startSignificant];
+}
+
+- (void)p_endInBackground{
+    [[SOLocationManager sharedInstance] stopSignificant];
+}
+
 #pragma mark - LocationManager notification handler
+
 - (void)handleLocationChangedNotification:(NSNotification *)note
 {
     self.currentLocation = [SOLocationManager sharedInstance].lastLocation;
