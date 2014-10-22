@@ -39,8 +39,9 @@ typedef enum
 
 @protocol SOMotionDetectorDelegate <NSObject>
 
-@optional
 - (void)motionDetector:(SOMotionDetector *)motionDetector motionTypeChanged:(SOMotionType)motionType;
+
+@optional
 - (void)motionDetector:(SOMotionDetector *)motionDetector locationChanged:(CLLocation *)location;
 - (void)motionDetector:(SOMotionDetector *)motionDetector accelerationChanged:(CMAcceleration)acceleration;
 

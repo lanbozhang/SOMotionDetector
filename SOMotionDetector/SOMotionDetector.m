@@ -91,6 +91,9 @@ CGFloat kMinimumRunningAcceleration = 3.5f;
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(p_endInBackground) name:UIApplicationWillEnterForegroundNotification object:nil];
     }
+    
+    __weak typeof(self) this = self;
+
     if (self.useM7IfAvailable && [CMMotionActivityManager isActivityAvailable])
     {
         
@@ -99,38 +102,36 @@ CGFloat kMinimumRunningAcceleration = 3.5f;
             self.motionActivityManager = [[CMMotionActivityManager alloc] init];
         }
         
-        [self.motionActivityManager startActivityUpdatesToQueue:[[NSOperationQueue alloc] init] withHandler:^(CMMotionActivity *activity) {
-            dispatch_async(dispatch_get_main_queue(), ^{
-                
-                if (activity.walking)
-                {
-                    _motionType = MotionTypeWalking;
-                }
-                else if (activity.running)
-                {
-                    _motionType = MotionTypeRunning;
-                }
-                else if (activity.automotive)
-                {
-                    _motionType = MotionTypeAutomotive;
-                }
-                else if (activity.stationary || activity.unknown)
-                {
-                    _motionType = MotionTypeNotMoving;
-                }
-                
-                // If type was changed, then call delegate method
-                if (self.motionType != self.previouseMotionType)
-                {
-                    self.previouseMotionType = self.motionType;
-                    
-                    if (self.delegate && [self.delegate respondsToSelector:@selector(motionDetector:motionTypeChanged:)])
-                    {
-                        [self.delegate motionDetector:self motionTypeChanged:self.motionType];
-                    }
-                }
-            });
-
+        NSOperationQueue* queue = [[NSOperationQueue alloc] init];
+        queue.maxConcurrentOperationCount = 1;
+        [self.motionActivityManager startActivityUpdatesToQueue:queue withHandler:^(CMMotionActivity *activity) {
+            __block SOMotionType motionType = this.previouseMotionType;
+            if (activity.walking)
+            {
+                motionType = MotionTypeWalking;
+            }
+            else if (activity.running)
+            {
+                motionType = MotionTypeRunning;
+            }
+            else if (activity.automotive)
+            {
+                motionType = MotionTypeAutomotive;
+            }
+            else if (activity.stationary || activity.unknown)
+            {
+                motionType = MotionTypeNotMoving;
+            }
+            
+            // If type was changed, then call delegate method
+            if (motionType != this.previouseMotionType)
+            {
+                this.previouseMotionType = motionType;
+                _motionType = motionType;
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [this.delegate motionDetector:this motionTypeChanged:this.motionType];
+                });
+            }
         }];
     }else{
         self.shakeDetectingTimer = [NSTimer scheduledTimerWithTimeInterval:0.01f target:self selector:@selector(detectShaking) userInfo:Nil repeats:YES];
@@ -138,11 +139,11 @@ CGFloat kMinimumRunningAcceleration = 3.5f;
         [self.motionManager startAccelerometerUpdatesToQueue:[[NSOperationQueue alloc] init] withHandler:^(CMAccelerometerData *accelerometerData, NSError *error)
          {
              _acceleration = accelerometerData.acceleration;
-             [self calculateMotionType];
+             [this calculateMotionType];
              dispatch_async(dispatch_get_main_queue(), ^{
-                 if (self.delegate && [self.delegate respondsToSelector:@selector(motionDetector:accelerationChanged:)])
+                 if (this.delegate && [this.delegate respondsToSelector:@selector(motionDetector:accelerationChanged:)])
                  {
-                     [self.delegate motionDetector:self accelerationChanged:self.acceleration];
+                     [this.delegate motionDetector:this accelerationChanged:this.acceleration];
                  }
              });
          }];
