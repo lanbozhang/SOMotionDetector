@@ -43,7 +43,7 @@ CGFloat kMinimumRunningAcceleration = 3.5f;
 @property (strong, nonatomic) CMMotionActivityManager *motionActivityManager;
 
 @property (nonatomic) BOOL started;
-
+@property (nonatomic, readonly) BOOL useM7;
 
 @end
 
@@ -72,6 +72,10 @@ CGFloat kMinimumRunningAcceleration = 3.5f;
     return self;
 }
 
+- (BOOL) useM7{
+    return self.useM7IfAvailable && [CMMotionActivityManager isActivityAvailable];
+}
+
 #pragma mark - Public Methods
 - (void)startDetection
 {
@@ -81,8 +85,8 @@ CGFloat kMinimumRunningAcceleration = 3.5f;
     
     self.started = YES;
     
-    if ((self.accessLocationIfM7Available && self.useM7IfAvailable && [CMMotionActivityManager isActivityAvailable])
-        || !self.accessLocationIfM7Available) {
+    if (!self.useM7
+        || (self.accessLocationIfM7Available && self.useM7)) {
         [[SOLocationManager sharedInstance] start];
     }else{
         [[NSNotificationCenter defaultCenter] addObserver:self
@@ -94,9 +98,8 @@ CGFloat kMinimumRunningAcceleration = 3.5f;
     
     __weak typeof(self) this = self;
 
-    if (self.useM7IfAvailable && [CMMotionActivityManager isActivityAvailable])
+    if (self.useM7)
     {
-        
         if (!self.motionActivityManager)
         {
             self.motionActivityManager = [[CMMotionActivityManager alloc] init];
@@ -160,8 +163,8 @@ CGFloat kMinimumRunningAcceleration = 3.5f;
     [self.shakeDetectingTimer invalidate];
     self.shakeDetectingTimer = nil;
     
-    if ((self.accessLocationIfM7Available && self.useM7IfAvailable && [CMMotionActivityManager isActivityAvailable])
-        || !self.accessLocationIfM7Available) {
+    if (!self.useM7
+        || (self.accessLocationIfM7Available && self.useM7)) {
         [[SOLocationManager sharedInstance] stop];
     }else{
         [[NSNotificationCenter defaultCenter] removeObserver:self];
@@ -195,7 +198,7 @@ CGFloat kMinimumRunningAcceleration = 3.5f;
 #pragma mark - Private Methods
 - (void)calculateMotionType
 {
-    if (self.useM7IfAvailable && [CMMotionActivityManager isActivityAvailable])
+    if (self.useM7)
     {
         return;
     }
