@@ -284,11 +284,11 @@ CGFloat kMinimumRunningAcceleration = 3.5f;
 }
 
 - (void)p_startInBackground{
-    [[SOLocationManager sharedInstance] startSignificant];
+    [[SOLocationManager sharedInstance] start];
 }
 
 - (void)p_endInBackground{
-    [[SOLocationManager sharedInstance] stopSignificant];
+    [[SOLocationManager sharedInstance] stop];
 }
 
 #pragma mark - LocationManager notification handler

@@ -19,6 +19,7 @@
         self.locationManager.desiredAccuracy = kCLLocationAccuracyBest;
         self.locationManager.distanceFilter = kCLDistanceFilterNone;
         self.locationManager.delegate = self;
+        self.locationManager.pausesLocationUpdatesAutomatically = NO;
         self.locationType = LocationManagerTypeNone;
     }
     
@@ -113,6 +114,11 @@
 - (void)locationManager:(CLLocationManager *)manager didFailWithError:(NSError *)error
 {
     [[NSNotificationCenter defaultCenter] postNotificationName:LOCATION_DID_FAILED_NOTIFICATION object:error userInfo:@{@"error":error}];
+}
+
+- (void)locationManagerDidPauseLocationUpdates:(CLLocationManager *)manager{
+    NSLog(@"locationManagerDidPauseLocationUpdates");
+    [[NSNotificationCenter defaultCenter] postNotificationName:LOCATION_DID_PAUSED_NOTIFICATION object:nil userInfo:nil];
 }
 
 @end
