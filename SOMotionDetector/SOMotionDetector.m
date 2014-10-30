@@ -88,13 +88,13 @@ CGFloat kMinimumRunningAcceleration = 3.5f;
     if (!self.useM7
         || (self.accessLocationIfM7Available && self.useM7)) {
         [[SOLocationManager sharedInstance] start];
-    }else{
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(p_startInBackground)
-                                                     name:UIApplicationDidEnterBackgroundNotification object:nil];
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(p_endInBackground) name:UIApplicationWillEnterForegroundNotification object:nil];
     }
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(p_startInBackground)
+                                                 name:UIApplicationDidEnterBackgroundNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(p_endInBackground) name:UIApplicationWillEnterForegroundNotification object:nil];
+
     
     __weak typeof(self) this = self;
 
@@ -166,10 +166,9 @@ CGFloat kMinimumRunningAcceleration = 3.5f;
     if (!self.useM7
         || (self.accessLocationIfM7Available && self.useM7)) {
         [[SOLocationManager sharedInstance] stop];
-    }else{
-        [[NSNotificationCenter defaultCenter] removeObserver:self];
-        [[SOLocationManager sharedInstance] stopSignificant];
     }
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+    [[SOLocationManager sharedInstance] stopSignificant];
     
     [self.motionManager stopAccelerometerUpdates];
     [self.motionActivityManager stopActivityUpdates];
@@ -284,11 +283,11 @@ CGFloat kMinimumRunningAcceleration = 3.5f;
 }
 
 - (void)p_startInBackground{
-    [[SOLocationManager sharedInstance] start];
+    [[SOLocationManager sharedInstance] startSignificant];
 }
 
 - (void)p_endInBackground{
-    [[SOLocationManager sharedInstance] stop];
+    [[SOLocationManager sharedInstance] stopSignificant];
 }
 
 #pragma mark - LocationManager notification handler
