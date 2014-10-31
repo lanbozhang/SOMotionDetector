@@ -60,6 +60,10 @@ CGFloat kMinimumRunningAcceleration = 3.5f;
     return instance;
 }
 
+- (void)dealloc{
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
+
 - (id)init
 {
     self = [super init];
@@ -87,14 +91,12 @@ CGFloat kMinimumRunningAcceleration = 3.5f;
     
     if (!self.useM7
         || (self.accessLocationIfM7Available && self.useM7)) {
+        [SOLocationManager sharedInstance].locationManager.desiredAccuracy = kCLLocationAccuracyBest;
+        [[SOLocationManager sharedInstance] start];
+    }else{
+        [SOLocationManager sharedInstance].locationManager.desiredAccuracy = kCLLocationAccuracyThreeKilometers;
         [[SOLocationManager sharedInstance] start];
     }
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(p_startInBackground)
-                                                 name:UIApplicationDidEnterBackgroundNotification object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(p_endInBackground) name:UIApplicationWillEnterForegroundNotification object:nil];
-
     
     __weak typeof(self) this = self;
 
@@ -163,10 +165,8 @@ CGFloat kMinimumRunningAcceleration = 3.5f;
     [self.shakeDetectingTimer invalidate];
     self.shakeDetectingTimer = nil;
     
-    if (!self.useM7
-        || (self.accessLocationIfM7Available && self.useM7)) {
-        [[SOLocationManager sharedInstance] stop];
-    }
+    [[SOLocationManager sharedInstance] stop];
+
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     [[SOLocationManager sharedInstance] stopSignificant];
     
@@ -280,14 +280,6 @@ CGFloat kMinimumRunningAcceleration = 3.5f;
         shakeDataForOneSec = nil;
         currentFiringTimeInterval = 0.0f;
     }
-}
-
-- (void)p_startInBackground{
-    [[SOLocationManager sharedInstance] startSignificant];
-}
-
-- (void)p_endInBackground{
-    [[SOLocationManager sharedInstance] stopSignificant];
 }
 
 #pragma mark - LocationManager notification handler
