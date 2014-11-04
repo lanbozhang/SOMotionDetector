@@ -53,6 +53,7 @@ CGFloat kMinimumRunningAcceleration = 3.5f;
 
 @implementation SOMotionDetector
 
+
 + (SOMotionDetector *)sharedInstance
 {
     static SOMotionDetector *instance = nil;
@@ -105,6 +106,9 @@ CGFloat kMinimumRunningAcceleration = 3.5f;
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(p_applicationDidEnterBackground) name:UIApplicationDidEnterBackgroundNotification object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(p_applicationWillEnterForeground) name:UIApplicationWillEnterForegroundNotification object:nil];
 
+        if ([[UIApplication sharedApplication] applicationState] == UIApplicationStateBackground) {
+            [self p_applicationDidEnterBackground];
+        }
     }
     
     __weak typeof(self) this = self;
