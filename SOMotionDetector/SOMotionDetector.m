@@ -25,6 +25,7 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE
 
 #import "SOMotionDetector.h"
+#import "BackgroundTaskManager.h"
 
 CGFloat kMinimumSpeed        = 0.3f;
 CGFloat kMaximumWalkingSpeed = 1.9f;
@@ -44,6 +45,9 @@ CGFloat kMinimumRunningAcceleration = 3.5f;
 
 @property (nonatomic) BOOL started;
 @property (nonatomic, readonly) BOOL useM7;
+
+@property (nonatomic, strong) NSTimer* locationUpdatingTimeOutTimer;
+@property (nonatomic, strong) NSTimer* locationRestartTimer;
 
 @end
 
@@ -70,7 +74,7 @@ CGFloat kMinimumRunningAcceleration = 3.5f;
     if (self)
     {
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleLocationChangedNotification:) name:LOCATION_DID_CHANGED_NOTIFICATION object:nil];
-        self.motionManager = [[CMMotionManager alloc] init];
+        self.motionManager = [[CMMotionManager alloc] init];        
     }
     
     return self;
@@ -91,11 +95,13 @@ CGFloat kMinimumRunningAcceleration = 3.5f;
     
     if (!self.useM7
         || (self.accessLocationIfM7Available && self.useM7)) {
-        [SOLocationManager sharedInstance].locationManager.desiredAccuracy = kCLLocationAccuracyBest;
         [[SOLocationManager sharedInstance] start];
     }else{
-        [SOLocationManager sharedInstance].locationManager.desiredAccuracy = kCLLocationAccuracyThreeKilometers;
-        [[SOLocationManager sharedInstance] start];
+        [[SOLocationManager sharedInstance] startSignificant];
+        
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(p_applicationDidEnterBackground) name:UIApplicationDidEnterBackgroundNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(p_applicationWillEnterForeground) name:UIApplicationWillEnterForegroundNotification object:nil];
+
     }
     
     __weak typeof(self) this = self;
@@ -165,13 +171,65 @@ CGFloat kMinimumRunningAcceleration = 3.5f;
     [self.shakeDetectingTimer invalidate];
     self.shakeDetectingTimer = nil;
     
-    [[SOLocationManager sharedInstance] stop];
-
     [[NSNotificationCenter defaultCenter] removeObserver:self];
-    [[SOLocationManager sharedInstance] stopSignificant];
-    
+
+    if (!self.useM7
+        || (self.accessLocationIfM7Available && self.useM7)) {
+        [SOLocationManager sharedInstance].locationManager.desiredAccuracy = kCLLocationAccuracyBest;
+        [[SOLocationManager sharedInstance] stop];
+    }else{
+        [[SOLocationManager sharedInstance] stopSignificant];
+        [[NSNotificationCenter defaultCenter] removeObserver:self
+                                                        name:UIApplicationDidEnterBackgroundNotification
+                                                      object:nil];
+        [[NSNotificationCenter defaultCenter] removeObserver:self
+                                                        name:UIApplicationWillEnterForegroundNotification
+                                                      object:nil];
+
+    }
     [self.motionManager stopAccelerometerUpdates];
     [self.motionActivityManager stopActivityUpdates];
+}
+
+#pragma mark - notification
+
+- (void)p_applicationDidEnterBackground{
+    [self p_retriveLocationInbackground];
+}
+
+- (void)p_applicationWillEnterForeground{
+    [[SOLocationManager sharedInstance] stop];
+    
+    [self.locationUpdatingTimeOutTimer invalidate];
+    self.locationUpdatingTimeOutTimer = nil;
+    
+    [self.locationRestartTimer invalidate];
+    self.locationRestartTimer = nil;
+    
+    [[BackgroundTaskManager sharedBackgroundTaskManager] endAllBackgroundTasks];
+}
+
+- (void)p_retriveLocationInbackground{
+    [[SOLocationManager sharedInstance] start];
+    self.locationUpdatingTimeOutTimer = [NSTimer scheduledTimerWithTimeInterval:10
+                                                                         target:self
+                                                                       selector:@selector(p_locationUpdatingDidTimeout)
+                                                                       userInfo:nil
+                                                                        repeats:NO];
+}
+
+- (void)p_locationUpdatingDidTimeout{
+    [[BackgroundTaskManager sharedBackgroundTaskManager] beginNewBackgroundTask];
+    [[SOLocationManager sharedInstance] stop];
+
+    [self.locationUpdatingTimeOutTimer invalidate];
+    self.locationUpdatingTimeOutTimer = nil;
+    
+    self.locationRestartTimer = [NSTimer scheduledTimerWithTimeInterval:160
+                                                                 target:self
+                                                               selector:@selector(p_retriveLocationInbackground)
+                                                               userInfo:nil
+                                                                repeats:NO];
 }
 
 #pragma mark - Customization Methods

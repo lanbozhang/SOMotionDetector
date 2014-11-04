@@ -40,7 +40,7 @@ typedef enum
 - (void)start;
 
 /**
- * Start Significant Location Update
+ * Start Significant Location Update, also keep background running
  */
 - (void)startSignificant;
 
