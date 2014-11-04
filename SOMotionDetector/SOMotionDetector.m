@@ -66,6 +66,9 @@ CGFloat kMinimumRunningAcceleration = 3.5f;
 
 - (void)dealloc{
     [[NSNotificationCenter defaultCenter] removeObserver:self];
+    
+    [self.locationUpdatingTimeOutTimer invalidate];
+    [self.locationRestartTimer invalidate];
 }
 
 - (id)init
@@ -210,6 +213,7 @@ CGFloat kMinimumRunningAcceleration = 3.5f;
 }
 
 - (void)p_retriveLocationInbackground{
+    [[BackgroundTaskManager sharedBackgroundTaskManager] beginNewBackgroundTask];
     [[SOLocationManager sharedInstance] start];
     self.locationUpdatingTimeOutTimer = [NSTimer scheduledTimerWithTimeInterval:10
                                                                          target:self
@@ -219,7 +223,6 @@ CGFloat kMinimumRunningAcceleration = 3.5f;
 }
 
 - (void)p_locationUpdatingDidTimeout{
-    [[BackgroundTaskManager sharedBackgroundTaskManager] beginNewBackgroundTask];
     [[SOLocationManager sharedInstance] stop];
 
     [self.locationUpdatingTimeOutTimer invalidate];
