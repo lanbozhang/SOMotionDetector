@@ -147,7 +147,7 @@ CGFloat kMinimumRunningAcceleration = 3.5f;
                 this.previouseMotionType = motionType;
                 _motionType = motionType;
                 dispatch_async(dispatch_get_main_queue(), ^{
-                    [this.delegate motionDetector:this motionTypeChanged:this.motionType];
+                    [this.delegate motionDetector:this motionTypeChanged:this.motionType startDate:activity.startDate];
                 });
             }
         }];
@@ -290,10 +290,7 @@ CGFloat kMinimumRunningAcceleration = 3.5f;
         self.previouseMotionType = self.motionType;
         
         dispatch_async(dispatch_get_main_queue(), ^{
-            if (self.delegate && [self.delegate respondsToSelector:@selector(motionDetector:motionTypeChanged:)])
-            {
-                [self.delegate motionDetector:self motionTypeChanged:self.motionType];
-            }
+            [self.delegate motionDetector:self motionTypeChanged:self.motionType startDate:[NSDate date]];
         });
     }
 }
