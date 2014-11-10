@@ -85,7 +85,13 @@ CGFloat kMinimumRunningAcceleration = 3.5f;
 }
 
 - (BOOL) useM7{
-    return self.useM7IfAvailable && [CMMotionActivityManager isActivityAvailable];
+    static BOOL isM7Available = NO;
+    
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        isM7Available = [CMMotionActivityManager isActivityAvailable];
+    });
+    return self.useM7IfAvailable && isM7Available;
 }
 
 #pragma mark - Public Methods
